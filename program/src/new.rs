@@ -1,22 +1,107 @@
-use forge_api::{consts::{ROYALTIES_BASIS_POINTS, ROYALTY_CREATOR_ADDRESS}, instruction::NewV1Args};
+use std::mem::size_of;
+
+use forge_api::{
+	consts::*,
+	instruction::NewV1Args,
+	loaders::{load_collection_authority, load_mint, load_program, load_signer, load_system_account, load_treasury, load_uninitialized_pda},
+	state::Config
+};
+use forge_utils::spl::create_ata;
 use solana_program::{
-  account_info::AccountInfo,
-  entrypoint::ProgramResult,
-  program_error::ProgramError,
+  account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError
 };
 use mpl_core::{
-  instructions::CreateCollectionV2CpiBuilder, 
+  instructions::CreateCollectionV2CpiBuilder,
   types::{Attribute, Attributes, Creator, Plugin, PluginAuthority, PluginAuthorityPair, Royalties, RuleSet}
 };
+
+use crate::utils::{create_pda, AccountDeserialize, Discriminator};
 
 pub fn process_new<'a, 'info>(
   accounts: &'a [AccountInfo<'info>],
   args: NewV1Args,
 ) -> ProgramResult {
-	let [signer, collection_authority, collection_info, mpl_core_program, system_program] = accounts
+	let (required_accounts, additional_accounts) = accounts.split_at(9);
+	let [signer, collection_info, collection_authority, config_info, treasury_info, mpl_core_program, token_program, associated_token_program, system_program] = required_accounts
 	else {
 		return Err(ProgramError::NotEnoughAccountKeys);
 	};
+
+
+	load_signer(signer)?;
+	msg!("signer loaded");
+	load_collection_authority(
+        collection_authority,
+        &[COLLECTION_AUTHORITY_SEED],
+        args.collection_authority_bump,
+        &forge_api::id(),
+    )?;
+	msg!("collection authority loaded");
+	load_uninitialized_pda(
+        config_info,
+        &[
+            CONFIG_SEED,
+            collection_info.key.as_ref(),
+        ],
+        args.config_bump,
+        &forge_api::id(),
+    )?;
+	msg!("config loaded");
+	load_treasury(treasury_info, false)?;
+	msg!("treasury loaded");
+	load_program(token_program, spl_token::ID)?;
+	load_program(associated_token_program, spl_associated_token_account::ID)?;
+	load_program(mpl_core_program, mpl_core::ID)?;
+	load_program(system_program, solana_program::system_program::ID)?;
+
+	// Check signer.
+	if signer.key.ne(&INITIALIZER_ADDRESS) {
+		return Err(ProgramError::MissingRequiredSignature);
+	}
+
+	// Initialize config.
+	create_pda(
+		config_info,
+		&forge_api::id(),
+		8 + size_of::<Config>(),
+		&[CONFIG_SEED, collection_info.key.as_ref(), &[args.config_bump]],
+		system_program,
+		signer,
+	)?;
+	let mut config_data = config_info.data.borrow_mut();
+	config_data[0] = Config::discriminator() as u8;
+	let config = Config::try_from_bytes_mut(&mut config_data)?;
+	config.amounts = [3, 2, 0];
+	config.ingredients = [COAL_MINT_ADDRESS, WOOD_MINT_ADDRESS, solana_program::system_program::ID];
+
+	// Initialize treasury token accounts if required
+	for i in 0..config.ingredients.len() {
+		let ingredient = config.ingredients[i];
+
+		if ingredient.eq(&solana_program::system_program::ID) {
+			continue;
+		}
+		msg!("index: {}",i);
+		msg!("ingredient: {}", ingredient);
+		let mint_info = &additional_accounts[i * 2];
+		let treasury_tokens_info = &additional_accounts[i * 2 + 1];
+
+		load_mint(mint_info, ingredient, false)?;
+		load_system_account(treasury_tokens_info, true)?;
+
+		if treasury_tokens_info.data_is_empty() {
+			create_ata(
+				signer,
+				treasury_info,
+				treasury_tokens_info,
+				mint_info,
+				system_program,
+				token_program,
+				associated_token_program,
+			)?;
+		}
+	
+	}
 
 	let collection_authority_seeds = &[b"collection_authority".as_ref(), &[args.collection_authority_bump]];
 	
@@ -30,14 +115,14 @@ pub fn process_new<'a, 'info>(
 			PluginAuthorityPair {
 				plugin: Plugin::Attributes(Attributes {
 					attribute_list: vec![
-					  Attribute {
+						Attribute {
 							key: "multiplier".to_string(),
-						  value: args.multiplier.to_string(),
-					  },
-					  Attribute {
-						  key: "durability".to_string(),
-						  value: args.durability.to_string(),
-					  },
+							value: args.multiplier.to_string(),
+						},
+						Attribute {
+							key: "durability".to_string(),
+							value: args.durability.to_string(),
+						},
 						Attribute {
 							key: "rarity".to_string(),
 							value: "common".to_string(),

@@ -3,6 +3,7 @@ pub mod error;
 pub mod event;
 pub mod instruction;
 pub mod state;
+pub mod loaders;
 
 pub(crate) use forge_utils as utils;
 

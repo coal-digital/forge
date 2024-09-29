@@ -1,4 +1,10 @@
-use forge_api::instruction::MintV1Args;
+use forge_api::{
+	consts::COAL_UPDATE_AUTHORITY,
+	instruction::MintV1Args,
+	loaders::{load_config, load_program, load_signer, load_token_account, load_treasury_token_account},
+	state::Config
+};
+use forge_utils::{AccountDeserialize, spl::transfer};
 use solana_program::{
   account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError
 };
@@ -12,12 +18,46 @@ pub fn process_mint<'a, 'info>(
   accounts: &'a [AccountInfo<'info>],
   args: MintV1Args,
 ) -> ProgramResult {
-	let [signer, mint_info, collection_info, collection_authority, update_authority, mpl_core_program, system_program] = accounts
+	let (required_accounts, remaining_accounts) = accounts.split_at(7);
+	let [signer, mint_info, collection_info, collection_authority, config_info, mpl_core_program, token_program, system_program] = required_accounts
 	else {
 		return Err(ProgramError::NotEnoughAccountKeys);
 	};
 
-	let collection = {
+	load_signer(signer)?;
+	load_config(config_info, *collection_info.key, true)?;
+	load_program(mpl_core_program, mpl_core::ID)?;
+	load_program(token_program, spl_token::ID)?;
+	load_program(system_program, solana_program::system_program::ID)?;
+
+	let config_data = config_info.data.borrow();
+	let config = Config::try_from_bytes(&config_data).unwrap();
+
+	for i in 0..config.ingredients.len() {
+		let ingredient = config.ingredients[i];
+		let amount = config.amounts[i];
+
+		if amount == 0 {
+			continue;
+		}
+
+		let ingredient_tokens_info = &remaining_accounts[i * 2];
+		let treasury_tokens_info = &remaining_accounts[i * 2 + 1];
+		
+		load_token_account(&ingredient_tokens_info, Some(signer.key), &ingredient, true)?;
+		load_treasury_token_account(&treasury_tokens_info, ingredient, true)?;
+		
+		// Transfer ingredient tokens to treasury
+		transfer(
+			signer, 
+			ingredient_tokens_info,
+			treasury_tokens_info,
+			token_program,
+			amount
+		)?;
+	}
+
+	let collection: Box<Collection> = {
 		let collection_data = collection_info.data.borrow();
 		Collection::from_bytes(&collection_data).unwrap()
 	};
@@ -38,13 +78,13 @@ pub fn process_mint<'a, 'info>(
           PluginAuthorityPair {
             plugin: Plugin::Attributes(attributes_plugin.attributes),
             authority: Some(PluginAuthority::Address {
-              address: *update_authority.key,
+              address: COAL_UPDATE_AUTHORITY,
             }),
           },
           PluginAuthorityPair {
             plugin: Plugin::Royalties(royalties_plugin.royalties),
             authority: Some(PluginAuthority::Address {
-              address: *update_authority.key,
+              address: COAL_UPDATE_AUTHORITY,
             }),
           },
         ])
@@ -54,17 +94,3 @@ pub fn process_mint<'a, 'info>(
   	Ok(())
 }
 
-// let (_, attributes, _) =
-// 	fetch_plugin::<BaseAssetV1, Attributes>(&mint_info, PluginType::Attributes).unwrap();
-
-// let durability_value = attributes
-// 	.attribute_list
-// 	.iter()
-// 	.find(|attr| attr.key == "durability")
-// 	.map(|attr| &attr.value);
-
-// if let Some(durability) = durability_value {
-// 	println!("Durability: {}", durability);
-// } else {
-// 	println!("Durability attribute not found");
-// }

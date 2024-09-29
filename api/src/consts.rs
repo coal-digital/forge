@@ -8,11 +8,30 @@ pub const INITIALIZER_ADDRESS: Pubkey = pubkey!("FJka1yJHn1SWux2X1o8VqHC8uaAWGv6
 /// Program id for const pda derivations
 const PROGRAM_ID: [u8; 32] = unsafe { *(&crate::id() as *const Pubkey as *const [u8; 32]) };
 
-pub const COAL_ADDRESS: Pubkey = pubkey!("EG67mGGTxMGuPxDLWeccczVecycmpj2SokzpWeBoGVTf");
-pub const UPDATE_AUTHORITY_SEED: &[u8] = b"update_authority";
+pub const COAL_PROGRAM_ID: Pubkey = pubkey!("EG67mGGTxMGuPxDLWeccczVecycmpj2SokzpWeBoGVTf");
+pub const COAL_PROGRAM_ID_BYTES: [u8; 32] = unsafe { *(&COAL_PROGRAM_ID as *const Pubkey as *const [u8; 32]) };
+
+pub const COAL_UPDATE_AUTHORITY_SEED: &[u8] = b"update_authority";
+pub const COAL_UPDATE_AUTHORITY: Pubkey = Pubkey::new_from_array(ed25519::derive_program_address(&[COAL_UPDATE_AUTHORITY_SEED], &COAL_PROGRAM_ID_BYTES).0);
 
 pub const ROYALTIES_BASIS_POINTS: u16 = 400;
 pub const ROYALTY_CREATOR_ADDRESS: Pubkey = pubkey!("B7yXtWpKXfwLDGyHLvab7ypZemajAbR2Kvbn2ogNs8J9");
 
 pub const COLLECTION_AUTHORITY_SEED: &[u8] = b"collection_authority";
 pub const COLLECTION_AUTHORITY_ADDRESS: Pubkey = Pubkey::new_from_array(ed25519::derive_program_address(&[COLLECTION_AUTHORITY_SEED], &PROGRAM_ID).0);
+
+pub const CONFIG_SEED: &[u8] = b"config";
+
+/// Mints
+pub const COAL_MINT_ADDRESS: Pubkey = pubkey!("E3yUqBNTZxV8ELvW99oRLC7z4ddbJqqR4NphwrMug9zu");
+pub const INGOT_MINT_ADDEESS: Pubkey = pubkey!("7W6R9rG1kfadLBUWw4mAj9eRCmARtzkbttKVdawVx15V");
+pub const WOOD_MINT_ADDRESS: Pubkey = pubkey!("Hrd2en37VJaDspWFq6miK8w6xTuQRTHNaD2e3tqH2uxr");
+
+pub const TREASURY: &[u8] = b"treasury";
+
+/// The address of the treasury account.
+pub const TREASURY_ADDRESS: Pubkey =
+    Pubkey::new_from_array(ed25519::derive_program_address(&[TREASURY], &PROGRAM_ID).0);
+
+/// The bump of the treasury account, for cpis.
+pub const TREASURY_BUMP: u8 = ed25519::derive_program_address(&[TREASURY], &PROGRAM_ID).1;
