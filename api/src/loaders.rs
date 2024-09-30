@@ -204,11 +204,12 @@ pub fn load_config<'a, 'info>(
     collection: Pubkey,
     is_writable: bool,
 ) -> Result<(), ProgramError> {
+    msg!("config_info: {:?}", info.key);
     if info.owner.ne(&crate::id()) {
         return Err(ProgramError::InvalidAccountOwner);
     }
 
-    let pda = Pubkey::find_program_address(&[CONFIG_SEED, collection.as_ref()], &collection).0;
+    let pda = Pubkey::find_program_address(&[CONFIG_SEED, collection.as_ref()], &crate::id()).0;
     if info.key.ne(&pda) {
         return Err(ProgramError::InvalidSeeds);
     }

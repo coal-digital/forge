@@ -6,7 +6,7 @@ use forge_api::{
 };
 use forge_utils::{AccountDeserialize, spl::transfer};
 use solana_program::{
-  account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError
+  account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError
 };
 use mpl_core::{
   Collection,
@@ -18,14 +18,16 @@ pub fn process_mint<'a, 'info>(
   accounts: &'a [AccountInfo<'info>],
   args: MintV1Args,
 ) -> ProgramResult {
-	let (required_accounts, remaining_accounts) = accounts.split_at(7);
+	let (required_accounts, remaining_accounts) = accounts.split_at(8);
 	let [signer, mint_info, collection_info, collection_authority, config_info, mpl_core_program, token_program, system_program] = required_accounts
 	else {
 		return Err(ProgramError::NotEnoughAccountKeys);
 	};
 
 	load_signer(signer)?;
-	load_config(config_info, *collection_info.key, true)?;
+	msg!("Loaded signer");
+	load_config(config_info, *collection_info.key, false)?;
+	msg!("Loaded config");
 	load_program(mpl_core_program, mpl_core::ID)?;
 	load_program(token_program, spl_token::ID)?;
 	load_program(system_program, solana_program::system_program::ID)?;
@@ -45,7 +47,9 @@ pub fn process_mint<'a, 'info>(
 		let treasury_tokens_info = &remaining_accounts[i * 2 + 1];
 		
 		load_token_account(&ingredient_tokens_info, Some(signer.key), &ingredient, true)?;
+		msg!("Loaded ingredient token account");
 		load_treasury_token_account(&treasury_tokens_info, ingredient, true)?;
+		msg!("Loaded treasury token account");
 		
 		// Transfer ingredient tokens to treasury
 		transfer(

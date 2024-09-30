@@ -3,7 +3,7 @@ use std::mem::size_of;
 use forge_api::{
 	consts::*,
 	instruction::NewV1Args,
-	loaders::{load_collection_authority, load_mint, load_program, load_signer, load_system_account, load_treasury, load_uninitialized_pda},
+	loaders::{load_collection_authority, load_mint, load_program, load_signer, load_treasury, load_treasury_token_account, load_uninitialized_pda},
 	state::Config
 };
 use forge_utils::spl::create_ata;
@@ -87,7 +87,7 @@ pub fn process_new<'a, 'info>(
 		let treasury_tokens_info = &additional_accounts[i * 2 + 1];
 
 		load_mint(mint_info, ingredient, false)?;
-		load_system_account(treasury_tokens_info, true)?;
+		load_treasury_token_account(treasury_tokens_info, ingredient, true)?;
 
 		if treasury_tokens_info.data_is_empty() {
 			create_ata(
@@ -117,7 +117,7 @@ pub fn process_new<'a, 'info>(
 					attribute_list: vec![
 						Attribute {
 							key: "multiplier".to_string(),
-							value: args.multiplier.to_string(),
+							value: args.multiplier.saturating_mul(ONE_COAL).to_string(),
 						},
 						Attribute {
 							key: "durability".to_string(),
@@ -148,15 +148,6 @@ pub fn process_new<'a, 'info>(
 				}),
 				authority: Some(PluginAuthority::UpdateAuthority),
 			},
-			// PluginAuthorityPair {
-			// 	plugin: Plugin::VerifiedCreators(VerifiedCreators {
-			// 		signatures: vec![VerifiedCreatorsSignature {
-			// 				address: *collection_authority.key,
-			// 				verified: true,
-			// 		}],
-			// 	}),
-			// 	authority: Some(PluginAuthority::UpdateAuthority),
-			// },
 		])
 		.system_program(system_program)
 		.invoke_signed(&[collection_authority_seeds])?;

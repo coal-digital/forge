@@ -1,6 +1,12 @@
 use const_crypto::ed25519;
 use solana_program::{pubkey, pubkey::Pubkey};
 
+/// The decimal precision of the COAL token.
+/// There are 100 billion indivisible units per COAL (called "grains").
+pub const TOKEN_DECIMALS: u8 = 11;
+
+/// One COAL token, denominated in indivisible units.
+pub const ONE_COAL: u64 = 10u64.pow(TOKEN_DECIMALS as u32);
 
 /// The authority allowed to initialize the program.
 pub const INITIALIZER_ADDRESS: Pubkey = pubkey!("FJka1yJHn1SWux2X1o8VqHC8uaAWGv6CbNQvPWLJQufq");

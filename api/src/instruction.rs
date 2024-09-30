@@ -91,7 +91,6 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
         config_bump,
         collection_authority_bump,
     });
-    //	signer, collection_info, collection_authority, config_info, treasury_info, mpl_core_program, token_program, associated_token_program, system_program
 
     Instruction {
         program_id: crate::id(),
@@ -141,7 +140,7 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey) -> Instruction {
         config_bump,
         collection_authority_bump,
     });
-    // signer, collection_authority, collection_info, config_info, treasury_info, mpl_core_program, token_program, associated_token_program, system_program
+    // signer, mint_info, collection_info, collection_authority, config_info, mpl_core_program, token_program, system_program
     Instruction {
         program_id: crate::id(),
         accounts: vec![
@@ -150,15 +149,13 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new(collection, false),
             AccountMeta::new_readonly(collection_authority, false),
             AccountMeta::new_readonly(config, false),
-            AccountMeta::new_readonly(TREASURY_ADDRESS, false),
             AccountMeta::new_readonly(MPL_CORE_ID, false),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_associated_token_account::id(), false),
             AccountMeta::new(system_program::id(), false),
-            AccountMeta::new(ingot_tokens, true),
-            AccountMeta::new(treasury_ingots, true),
-            AccountMeta::new(wood_tokens, true),
-            AccountMeta::new(treasury_wood, true),
+            AccountMeta::new(ingot_tokens, false),
+            AccountMeta::new(treasury_ingots, false),
+            AccountMeta::new(wood_tokens, false),
+            AccountMeta::new(treasury_wood, false),
         ],
         data: [mint_v1_args.try_to_vec().unwrap()].concat(),
     }
