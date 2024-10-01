@@ -39,7 +39,6 @@ pub fn process_initialize<'a, 'info>(
     )?;
     let mut treasury_data = treasury_info.data.borrow_mut();
     treasury_data[0] = Treasury::discriminator() as u8;
-    drop(treasury_data);
 
     Ok(())
 }

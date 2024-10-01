@@ -29,14 +29,12 @@ pub fn process_new<'a, 'info>(
 
 
 	load_signer(signer)?;
-	msg!("signer loaded");
 	load_collection_authority(
         collection_authority,
         &[COLLECTION_AUTHORITY_SEED],
         args.collection_authority_bump,
         &forge_api::id(),
     )?;
-	msg!("collection authority loaded");
 	load_uninitialized_pda(
         config_info,
         &[
@@ -46,9 +44,7 @@ pub fn process_new<'a, 'info>(
         args.config_bump,
         &forge_api::id(),
     )?;
-	msg!("config loaded");
 	load_treasury(treasury_info, false)?;
-	msg!("treasury loaded");
 	load_program(token_program, spl_token::ID)?;
 	load_program(associated_token_program, spl_associated_token_account::ID)?;
 	load_program(mpl_core_program, mpl_core::ID)?;
@@ -70,8 +66,8 @@ pub fn process_new<'a, 'info>(
 	)?;
 	let mut config_data = config_info.data.borrow_mut();
 	config_data[0] = Config::discriminator() as u8;
-	let config = Config::try_from_bytes_mut(&mut config_data)?;
-	config.amounts = [3, 2, 0];
+	let config: &mut Config = Config::try_from_bytes_mut(&mut config_data)?;
+	config.amounts = [ONE_TOKEN.saturating_mul(2), ONE_TOKEN, 0];
 	config.ingredients = [COAL_MINT_ADDRESS, WOOD_MINT_ADDRESS, solana_program::system_program::ID];
 
 	// Initialize treasury token accounts if required
@@ -81,8 +77,7 @@ pub fn process_new<'a, 'info>(
 		if ingredient.eq(&solana_program::system_program::ID) {
 			continue;
 		}
-		msg!("index: {}",i);
-		msg!("ingredient: {}", ingredient);
+
 		let mint_info = &additional_accounts[i * 2];
 		let treasury_tokens_info = &additional_accounts[i * 2 + 1];
 
@@ -117,7 +112,7 @@ pub fn process_new<'a, 'info>(
 					attribute_list: vec![
 						Attribute {
 							key: "multiplier".to_string(),
-							value: args.multiplier.saturating_mul(ONE_COAL).to_string(),
+							value: args.multiplier.to_string(),
 						},
 						Attribute {
 							key: "durability".to_string(),

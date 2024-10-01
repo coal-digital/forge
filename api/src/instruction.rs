@@ -84,10 +84,10 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
     );
 
     let new_v1_args = ForgeInstruction::NewV1(NewV1Args {
-        name: "test3".to_string(),
-        uri: "test3".to_string(),
-        multiplier: 50,
-        durability: 2000,
+        name: "Iron Pickaxe".to_string(),
+        uri: "https://minechain.gg/metadata.pickaxe.json".to_string(),
+        multiplier: 70,
+        durability: 1000,
         config_bump,
         collection_authority_bump,
     });
