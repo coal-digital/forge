@@ -71,29 +71,29 @@ pub fn process_mint<'a, 'info>(
 	let collection_authority_seeds = &[b"collection_authority".as_ref(), &[args.collection_authority_bump]];
 
   	CreateV2CpiBuilder::new(mpl_core_program)
-        .asset(mint_info)
-        .collection(Some(&collection_info))
-        .payer(signer)
+		.asset(mint_info)
+		.collection(Some(&collection_info))
+		.payer(signer)
 		.owner(Some(signer))
-        .name(collection.base.name.clone())
-        .uri(collection.base.uri.clone())
+		.name(collection.base.name.clone())
+		.uri(collection.base.uri.clone())
 		.authority(Some(collection_authority))
-        .plugins(vec![
-          PluginAuthorityPair {
-            plugin: Plugin::Attributes(attributes_plugin.attributes),
-            authority: Some(PluginAuthority::Address {
-              address: COAL_UPDATE_AUTHORITY,
-            }),
-          },
-          PluginAuthorityPair {
-            plugin: Plugin::Royalties(royalties_plugin.royalties),
-            authority: Some(PluginAuthority::Address {
-              address: COAL_UPDATE_AUTHORITY,
-            }),
-          },
-        ])
+		.plugins(vec![
+			PluginAuthorityPair {
+			plugin: Plugin::Attributes(attributes_plugin.attributes),
+			authority: Some(PluginAuthority::Address {
+				address: COAL_UPDATE_AUTHORITY,
+			}),
+			},
+			PluginAuthorityPair {
+			plugin: Plugin::Royalties(royalties_plugin.royalties),
+			authority: Some(PluginAuthority::Address {
+				address: COAL_UPDATE_AUTHORITY,
+			}),
+			},
+		])
 		.system_program(system_program)
-        .invoke_signed(&[collection_authority_seeds])?;
+		.invoke_signed(&[collection_authority_seeds])?;
 
   	Ok(())
 }
