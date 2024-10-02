@@ -140,7 +140,7 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey) -> Instruction {
         config_bump,
         collection_authority_bump,
     });
-    // signer, mint_info, collection_info, collection_authority, config_info, mpl_core_program, token_program, system_program
+
     Instruction {
         program_id: crate::id(),
         accounts: vec![
