@@ -23,6 +23,8 @@ pub struct NewV1Args {
     pub uri: String,
     pub multiplier: u64,
     pub durability: u64,
+    pub ingredients: [Pubkey; 3],
+    pub amounts: [u64; 3],
     pub config_bump: u8,
     pub collection_authority_bump: u8,
 }
@@ -74,20 +76,13 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
     let (collection_authority, collection_authority_bump) = Pubkey::find_program_address(&[COLLECTION_AUTHORITY_SEED], &crate::id());
     let (config, config_bump) = Pubkey::find_program_address(&[CONFIG_SEED, collection.as_ref()], &crate::id());
 
-    let treasury_ingots = spl_associated_token_account::get_associated_token_address(
-        &TREASURY_ADDRESS,
-        &INGOT_MINT_ADDEESS,
-    );
-    let treasury_wood = spl_associated_token_account::get_associated_token_address(
-        &TREASURY_ADDRESS,
-        &WOOD_MINT_ADDRESS,
-    );
-
     let new_v1_args = ForgeInstruction::NewV1(NewV1Args {
         name: "Miner's Pickaxe".to_string(),
         uri: "https://minechain.gg/metadata.pickaxe.json".to_string(),
         multiplier: 70, // 70% bonus
         durability: 1000, // 1000 uses
+        amounts: [ONE_TOKEN.saturating_mul(3), ONE_TOKEN.saturating_mul(2), 0],
+        ingredients: [INGOT_MINT_ADDEESS, WOOD_MINT_ADDRESS, solana_program::system_program::ID],
         config_bump,
         collection_authority_bump,
     });
@@ -99,15 +94,12 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
             AccountMeta::new(collection, true),
             AccountMeta::new_readonly(collection_authority, false),
             AccountMeta::new(config, false),
-            AccountMeta::new_readonly(TREASURY_ADDRESS, false),
             AccountMeta::new_readonly(MPL_CORE_ID, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(spl_associated_token_account::id(), false),
             AccountMeta::new(system_program::id(), false),
             AccountMeta::new_readonly(INGOT_MINT_ADDEESS, false),
-            AccountMeta::new(treasury_ingots, false),
             AccountMeta::new_readonly(WOOD_MINT_ADDRESS, false),
-            AccountMeta::new(treasury_wood, false),
         ],
         data: [new_v1_args.try_to_vec().unwrap()].concat(),
     }
@@ -120,18 +112,10 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey) -> Instruction {
 
     let ingot_tokens = spl_associated_token_account::get_associated_token_address(
         &signer,
-        &COAL_MINT_ADDRESS // &INGOT_MINT_ADDEESS,
-    );
-    let treasury_ingots = spl_associated_token_account::get_associated_token_address(
-        &TREASURY_ADDRESS,
-        &COAL_MINT_ADDRESS // &INGOT_MINT_ADDEESS,
+        &INGOT_MINT_ADDEESS,
     );
     let wood_tokens = spl_associated_token_account::get_associated_token_address(
         &signer,
-        &WOOD_MINT_ADDRESS,
-    );
-    let treasury_wood = spl_associated_token_account::get_associated_token_address(
-        &TREASURY_ADDRESS,
         &WOOD_MINT_ADDRESS,
     );
 
@@ -151,10 +135,10 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new_readonly(MPL_CORE_ID, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new(system_program::id(), false),
+            AccountMeta::new(INGOT_MINT_ADDEESS, false),
             AccountMeta::new(ingot_tokens, false),
-            AccountMeta::new(treasury_ingots, false),
+            AccountMeta::new(WOOD_MINT_ADDRESS, false),
             AccountMeta::new(wood_tokens, false),
-            AccountMeta::new(treasury_wood, false),
         ],
         data: [mint_v1_args.try_to_vec().unwrap()].concat(),
     }

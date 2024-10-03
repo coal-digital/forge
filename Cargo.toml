@@ -3,7 +3,7 @@ resolver = "2"
 members = ["api", "program", "utils"]
 
 [workspace.package]
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 license = "Apache-2.0"
 homepage = "https://minechain.gg"
@@ -21,8 +21,8 @@ drillx = { version = "2.1.0", features = ["solana"] }
 mpl-core = "0.8.0"
 mpl-token-metadata = "4.1.2"
 num_enum = "0.7.2"
-forge-api = { path = "api", version = "1.0.0" }
-forge-utils = { path = "utils", features = ["spl"], version = "1.0.0" }
+forge-api = { path = "api", version = "1.0.2" }
+forge-utils = { path = "utils", features = ["spl"], version = "1.0.2" }
 solana-program = "^1.18"
 spl-token = { version = "^4", features = ["no-entrypoint"] }
 spl-associated-token-account = { version = "^2.3", features = [ "no-entrypoint" ] } 

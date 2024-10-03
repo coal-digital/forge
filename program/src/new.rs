@@ -3,10 +3,9 @@ use std::mem::size_of;
 use forge_api::{
 	consts::*,
 	instruction::NewV1Args,
-	loaders::{load_collection_authority, load_mint, load_program, load_signer, load_treasury, load_treasury_token_account, load_uninitialized_pda},
+	loaders::{load_collection_authority, load_mint, load_program, load_signer, load_uninitialized_pda},
 	state::Config
 };
-use forge_utils::spl::create_ata;
 use solana_program::{
   account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError
 };
@@ -21,8 +20,8 @@ pub fn process_new<'a, 'info>(
   accounts: &'a [AccountInfo<'info>],
   args: NewV1Args,
 ) -> ProgramResult {
-	let (required_accounts, additional_accounts) = accounts.split_at(9);
-	let [signer, collection_info, collection_authority, config_info, treasury_info, mpl_core_program, token_program, associated_token_program, system_program] = required_accounts
+	let (required_accounts, additional_accounts) = accounts.split_at(8);
+	let [signer, collection_info, collection_authority, config_info, mpl_core_program, token_program, associated_token_program, system_program] = required_accounts
 	else {
 		return Err(ProgramError::NotEnoughAccountKeys);
 	};
@@ -44,7 +43,6 @@ pub fn process_new<'a, 'info>(
         args.config_bump,
         &forge_api::id(),
     )?;
-	load_treasury(treasury_info, false)?;
 	load_program(token_program, spl_token::ID)?;
 	load_program(associated_token_program, spl_associated_token_account::ID)?;
 	load_program(mpl_core_program, mpl_core::ID)?;
@@ -67,8 +65,8 @@ pub fn process_new<'a, 'info>(
 	let mut config_data = config_info.data.borrow_mut();
 	config_data[0] = Config::discriminator() as u8;
 	let config: &mut Config = Config::try_from_bytes_mut(&mut config_data)?;
-	config.amounts = [ONE_TOKEN.saturating_mul(3), ONE_TOKEN.saturating_mul(2), 0];
-	config.ingredients = [INGOT_MINT_ADDEESS, WOOD_MINT_ADDRESS, solana_program::system_program::ID];
+	config.amounts = args.amounts;
+	config.ingredients = args.ingredients;
 
 	// Initialize treasury token accounts if required
 	for i in 0..config.ingredients.len() {
@@ -78,24 +76,8 @@ pub fn process_new<'a, 'info>(
 			continue;
 		}
 
-		let mint_info = &additional_accounts[i * 2];
-		let treasury_tokens_info = &additional_accounts[i * 2 + 1];
-
+		let mint_info = &additional_accounts[i];
 		load_mint(mint_info, ingredient, false)?;
-		load_treasury_token_account(treasury_tokens_info, ingredient, true)?;
-
-		if treasury_tokens_info.data_is_empty() {
-			create_ata(
-				signer,
-				treasury_info,
-				treasury_tokens_info,
-				mint_info,
-				system_program,
-				token_program,
-				associated_token_program,
-			)?;
-		}
-	
 	}
 
 	let collection_authority_seeds = &[b"collection_authority".as_ref(), &[args.collection_authority_bump]];

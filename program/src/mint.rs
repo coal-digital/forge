@@ -1,10 +1,10 @@
 use forge_api::{
 	consts::COAL_UPDATE_AUTHORITY,
 	instruction::MintV1Args,
-	loaders::{load_config, load_program, load_signer, load_token_account, load_treasury_token_account},
+	loaders::{load_config, load_program, load_signer, load_token_account},
 	state::Config
 };
-use forge_utils::{AccountDeserialize, spl::transfer};
+use forge_utils::{spl::burn, AccountDeserialize};
 use solana_program::{
   account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError
 };
@@ -41,17 +41,20 @@ pub fn process_mint<'a, 'info>(
 			continue;
 		}
 
-		let ingredient_tokens_info = &remaining_accounts[i * 2];
-		let treasury_tokens_info = &remaining_accounts[i * 2 + 1];
+		let mint_info = &remaining_accounts[i * 2];
+		let ingredient_tokens_info = &remaining_accounts[i * 2 + 1];
 		
+		if ingredient.ne(&mint_info.key) {
+			return Err(ProgramError::InvalidAccountData);
+		}
+
 		load_token_account(&ingredient_tokens_info, Some(signer.key), &ingredient, true)?;
-		load_treasury_token_account(&treasury_tokens_info, ingredient, true)?;
 		
-		// Transfer ingredient tokens to treasury
-		transfer(
-			signer, 
-			ingredient_tokens_info,
-			treasury_tokens_info,
+		// Burn ingredient tokens
+		burn(
+			ingredient_tokens_info, 
+			mint_info,
+			signer,
 			token_program,
 			amount
 		)?;
@@ -93,4 +96,3 @@ pub fn process_mint<'a, 'info>(
 
   	Ok(())
 }
-
