@@ -29,20 +29,20 @@ pub fn process_new<'a, 'info>(
 
 	load_signer(signer)?;
 	load_collection_authority(
-        collection_authority,
-        &[COLLECTION_AUTHORITY_SEED],
-        args.collection_authority_bump,
-        &forge_api::id(),
-    )?;
+		collection_authority,
+		&[COLLECTION_AUTHORITY_SEED],
+		args.collection_authority_bump,
+		&forge_api::id(),
+	)?;
 	load_uninitialized_pda(
-        config_info,
-        &[
-            CONFIG_SEED,
-            collection_info.key.as_ref(),
-        ],
-        args.config_bump,
-        &forge_api::id(),
-    )?;
+		config_info,
+		&[
+			CONFIG_SEED,
+			collection_info.key.as_ref(),
+		],
+		args.config_bump,
+		&forge_api::id(),
+	)?;
 	load_program(token_program, spl_token::ID)?;
 	load_program(associated_token_program, spl_associated_token_account::ID)?;
 	load_program(mpl_core_program, mpl_core::ID)?;
@@ -68,7 +68,7 @@ pub fn process_new<'a, 'info>(
 	config.amounts = args.amounts;
 	config.ingredients = args.ingredients;
 
-	// Initialize treasury token accounts if required
+	// Validate mints
 	for i in 0..config.ingredients.len() {
 		let ingredient = config.ingredients[i];
 
