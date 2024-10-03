@@ -76,7 +76,7 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
 
     let treasury_ingots = spl_associated_token_account::get_associated_token_address(
         &TREASURY_ADDRESS,
-        &COAL_MINT_ADDRESS// &INGOT_MINT_ADDEESS,
+        &INGOT_MINT_ADDEESS,
     );
     let treasury_wood = spl_associated_token_account::get_associated_token_address(
         &TREASURY_ADDRESS,
@@ -104,8 +104,7 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(spl_associated_token_account::id(), false),
             AccountMeta::new(system_program::id(), false),
-            AccountMeta::new_readonly(COAL_MINT_ADDRESS, false),
-            // AccountMeta::new_readonly(INGOT_MINT_ADDEESS, false),
+            AccountMeta::new_readonly(INGOT_MINT_ADDEESS, false),
             AccountMeta::new(treasury_ingots, false),
             AccountMeta::new_readonly(WOOD_MINT_ADDRESS, false),
             AccountMeta::new(treasury_wood, false),

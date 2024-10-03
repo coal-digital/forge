@@ -8,7 +8,7 @@ use forge_api::{
 };
 use forge_utils::spl::create_ata;
 use solana_program::{
-  account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError
+  account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError
 };
 use mpl_core::{
   instructions::CreateCollectionV2CpiBuilder,
@@ -67,8 +67,8 @@ pub fn process_new<'a, 'info>(
 	let mut config_data = config_info.data.borrow_mut();
 	config_data[0] = Config::discriminator() as u8;
 	let config: &mut Config = Config::try_from_bytes_mut(&mut config_data)?;
-	config.amounts = [ONE_TOKEN.saturating_mul(2), ONE_TOKEN, 0];
-	config.ingredients = [COAL_MINT_ADDRESS, WOOD_MINT_ADDRESS, solana_program::system_program::ID];
+	config.amounts = [ONE_TOKEN.saturating_mul(3), ONE_TOKEN.saturating_mul(2), 0];
+	config.ingredients = [INGOT_MINT_ADDEESS, WOOD_MINT_ADDRESS, solana_program::system_program::ID];
 
 	// Initialize treasury token accounts if required
 	for i in 0..config.ingredients.len() {
