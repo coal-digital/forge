@@ -11,6 +11,7 @@ use crate::consts::*;
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
 pub struct MintV1Args {
+    pub resource: String,
     pub config_bump: u8,
     pub collection_authority_bump: u8,
 
@@ -81,8 +82,8 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
         uri: "https://minechain.gg/metadata.pickaxe.json".to_string(),
         multiplier: 70, // 70% bonus
         durability: 1000, // 1000 uses
-        amounts: [ONE_TOKEN.saturating_mul(3), ONE_TOKEN.saturating_mul(2), 0],
-        ingredients: [INGOT_MINT_ADDEESS, WOOD_MINT_ADDRESS, solana_program::system_program::ID],
+        amounts: [ONE_TOKEN.saturating_mul(1), 0, 0],
+        ingredients: [COAL_MINT_ADDRESS, solana_program::system_program::ID, solana_program::system_program::ID],
         config_bump,
         collection_authority_bump,
     });
@@ -98,7 +99,7 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(spl_associated_token_account::id(), false),
             AccountMeta::new(system_program::id(), false),
-            AccountMeta::new_readonly(INGOT_MINT_ADDEESS, false),
+            AccountMeta::new_readonly(COAL_MINT_ADDRESS, false),
             AccountMeta::new_readonly(WOOD_MINT_ADDRESS, false),
         ],
         data: [new_v1_args.try_to_vec().unwrap()].concat(),
@@ -106,20 +107,21 @@ pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
 }
 
 // signer, mint_info, collection_info, collection_authority, mpl_core_program, system_program
-pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey) -> Instruction {
+pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey, resource: String) -> Instruction {
     let (collection_authority, collection_authority_bump) = Pubkey::find_program_address(&[COLLECTION_AUTHORITY_SEED], &crate::id());
     let (config, config_bump) = Pubkey::find_program_address(&[CONFIG_SEED, collection.as_ref()], &crate::id());
 
     let ingot_tokens = spl_associated_token_account::get_associated_token_address(
         &signer,
-        &INGOT_MINT_ADDEESS,
+        &COAL_MINT_ADDRESS,
     );
-    let wood_tokens = spl_associated_token_account::get_associated_token_address(
-        &signer,
-        &WOOD_MINT_ADDRESS,
-    );
+    // let wood_tokens = spl_associated_token_account::get_associated_token_address(
+    //     &signer,
+    //     &WOOD_MINT_ADDRESS,
+    // );
 
-    let mint_v1_args = ForgeInstruction::MintV1(MintV1Args {
+    let mint_v1_args: ForgeInstruction = ForgeInstruction::MintV1(MintV1Args {
+        resource,
         config_bump,
         collection_authority_bump,
     });
@@ -135,10 +137,10 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey) -> Instruction {
             AccountMeta::new_readonly(MPL_CORE_ID, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new(system_program::id(), false),
-            AccountMeta::new(INGOT_MINT_ADDEESS, false),
+            AccountMeta::new(COAL_MINT_ADDRESS, false),
             AccountMeta::new(ingot_tokens, false),
-            AccountMeta::new(WOOD_MINT_ADDRESS, false),
-            AccountMeta::new(wood_tokens, false),
+            // AccountMeta::new(WOOD_MINT_ADDRESS, false),
+            // AccountMeta::new(wood_tokens, false),
         ],
         data: [mint_v1_args.try_to_vec().unwrap()].concat(),
     }

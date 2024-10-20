@@ -1,23 +1,18 @@
 use forge_api::{
-	consts::COAL_UPDATE_AUTHORITY,
-	instruction::MintV1Args,
-	loaders::{load_config, load_program, load_signer, load_token_account},
-	state::Config
+	consts::COAL_UPDATE_AUTHORITY, error::ForgeError, instruction::MintV1Args, loaders::{load_config, load_program, load_signer, load_token_account}, state::Config
 };
 use forge_utils::{spl::burn, AccountDeserialize};
 use solana_program::{
-  account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError
+  account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError
 };
 use mpl_core::{
-  Collection,
-  instructions::CreateV2CpiBuilder, 
-  types::{Plugin, PluginAuthority, PluginAuthorityPair},
+  instructions::CreateV2CpiBuilder, types::{Attribute, Attributes, Plugin, PluginAuthority, PluginAuthorityPair}, Collection
 };
 
 pub fn process_mint<'a, 'info>(
   accounts: &'a [AccountInfo<'info>],
   args: MintV1Args,
-) -> ProgramResult {
+) -> ProgramResult {	
 	let (required_accounts, remaining_accounts) = accounts.split_at(8);
 	let [signer, mint_info, collection_info, collection_authority, config_info, mpl_core_program, token_program, system_program] = required_accounts
 	else {
@@ -36,7 +31,7 @@ pub fn process_mint<'a, 'info>(
 	for i in 0..config.ingredients.len() {
 		let ingredient = config.ingredients[i];
 		let amount = config.amounts[i];
-
+		msg!("Minting ingredient: {:?}, amount: {:?}", ingredient, amount);
 		if amount == 0 {
 			continue;
 		}
@@ -64,9 +59,59 @@ pub fn process_mint<'a, 'info>(
 		let collection_data = collection_info.data.borrow();
 		Collection::from_bytes(&collection_data).unwrap()
 	};
-	let attributes_plugin = collection.plugin_list.attributes.unwrap();
 	let royalties_plugin = collection.plugin_list.royalties.unwrap();
 	
+	let mut attribute_list = vec![
+		Attribute {
+			key: "multiplier".to_string(),
+			value: "70".to_string(),
+		},
+		Attribute {
+			key: "rarity".to_string(),
+			value: "common".to_string(),
+		},
+	];
+	
+	match args.resource.as_str() {
+		"coal" => {
+			attribute_list.push(Attribute {
+				key: "resource".to_string(),
+				value: "coal".to_string(),
+			});
+			attribute_list.push(Attribute {
+				key: "durability".to_string(),
+				value: "1000".to_string(),
+			});
+		},
+		"wood" => {
+			attribute_list.push(Attribute {
+				key: "resource".to_string(),
+				value: "wood".to_string(),
+			});
+			attribute_list.push(Attribute {
+				key: "durability".to_string(),
+				value: "100".to_string(),
+			});
+		},
+		_ => {
+			return Err(ForgeError::InvalidResource.into());
+		}
+	};
+	let name = match args.resource.as_str() {
+		"coal" => "Miner's Pickaxe".to_string(),
+		"wood" => "Woodcutter's Axe".to_string(),
+		_ => {
+			return Err(ForgeError::InvalidResource.into());
+		}
+	};
+	let uri = match args.resource.as_str() {
+		"coal" => "https://minechain.gg/metadata.pickaxe.json".to_string(),
+		"wood" => "https://minechain.gg/metadata.axe.json".to_string(),
+		_ => {
+			return Err(ForgeError::InvalidResource.into());
+		}
+	};
+
 	let collection_authority_seeds = &[b"collection_authority".as_ref(), &[args.collection_authority_bump]];
 
   	CreateV2CpiBuilder::new(mpl_core_program)
@@ -74,12 +119,14 @@ pub fn process_mint<'a, 'info>(
 		.collection(Some(&collection_info))
 		.payer(signer)
 		.owner(Some(signer))
-		.name(collection.base.name.clone())
-		.uri(collection.base.uri.clone())
+		.name(name)
+		.uri(uri)
 		.authority(Some(collection_authority))
 		.plugins(vec![
 			PluginAuthorityPair {
-				plugin: Plugin::Attributes(attributes_plugin.attributes),
+				plugin: Plugin::Attributes(Attributes {
+					attribute_list
+				}),
 				authority: Some(PluginAuthority::Address {
 					address: COAL_UPDATE_AUTHORITY,
 				}),
