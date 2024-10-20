@@ -31,7 +31,7 @@ pub fn process_mint<'a, 'info>(
 	for i in 0..config.ingredients.len() {
 		let ingredient = config.ingredients[i];
 		let amount = config.amounts[i];
-		msg!("Minting ingredient: {:?}, amount: {:?}", ingredient, amount);
+		msg!("Ingredient: {:?}, amount: {:?}", ingredient, amount);
 		if amount == 0 {
 			continue;
 		}

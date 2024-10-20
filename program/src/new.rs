@@ -7,7 +7,7 @@ use forge_api::{
 	state::Config
 };
 use solana_program::{
-  account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError
+  account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError
 };
 use mpl_core::{
   instructions::CreateCollectionV2CpiBuilder,
@@ -28,14 +28,12 @@ pub fn process_new<'a, 'info>(
 
 
 	load_signer(signer)?;
-	msg!("Loading collection authority");
 	load_collection_authority(
 		collection_authority,
 		&[COLLECTION_AUTHORITY_SEED],
 		args.collection_authority_bump,
 		&forge_api::id(),
 	)?;
-	msg!("Loading uninitialized config PDA");
 	load_uninitialized_pda(
 		config_info,
 		&[
@@ -45,7 +43,6 @@ pub fn process_new<'a, 'info>(
 		args.config_bump,
 		&forge_api::id(),
 	)?;
-	msg!("Loading token program");
 	load_program(token_program, spl_token::ID)?;
 	load_program(associated_token_program, spl_associated_token_account::ID)?;
 	load_program(mpl_core_program, mpl_core::ID)?;
@@ -57,7 +54,6 @@ pub fn process_new<'a, 'info>(
 	}
 
 	// Initialize config.
-	msg!("Creating config PDA");
 	create_pda(
 		config_info,
 		&forge_api::id(),
