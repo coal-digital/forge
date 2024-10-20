@@ -1,5 +1,9 @@
 use forge_api::{
-	consts::COAL_UPDATE_AUTHORITY, error::ForgeError, instruction::MintV1Args, loaders::{load_config, load_program, load_signer, load_token_account}, state::Config
+	consts::{COAL_UPDATE_AUTHORITY, COLLECTION_AUTHORITY_SEED},
+	error::ForgeError,
+	instruction::MintV1Args,
+	loaders::{load_config, load_program, load_signer, load_token_account}, 
+	state::Config
 };
 use forge_utils::{spl::burn, AccountDeserialize};
 use solana_program::{
@@ -112,7 +116,7 @@ pub fn process_mint<'a, 'info>(
 		}
 	};
 
-	let collection_authority_seeds = &[b"collection_authority".as_ref(), &[args.collection_authority_bump]];
+	let collection_authority_seeds = &[COLLECTION_AUTHORITY_SEED, &[args.collection_authority_bump]];
 
   	CreateV2CpiBuilder::new(mpl_core_program)
 		.asset(mint_info)

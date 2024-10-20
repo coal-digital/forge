@@ -36,6 +36,12 @@ pub struct InitializeArgs {
     pub treasury_bump: u8,
 }
 
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
+pub struct VerifyArgs {
+    pub collection_authority_bump: u8,
+}
+
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
 #[rustfmt::skip]
 pub enum ForgeInstruction {
@@ -44,6 +50,7 @@ pub enum ForgeInstruction {
     // Admin
     NewV1(NewV1Args),
     Initialize(InitializeArgs),
+    Verify(VerifyArgs),
 }
 
 impl ForgeInstruction {
@@ -70,7 +77,24 @@ pub fn initialize(signer: Pubkey) -> Instruction {
     }
 }
 
+pub fn verify(signer: Pubkey, destination: Pubkey) -> Instruction {
+    let (collection_authority, collection_authority_bump) = Pubkey::find_program_address(&[COLLECTION_AUTHORITY_SEED], &crate::id());
+
+    let verify_args: ForgeInstruction = ForgeInstruction::Verify(VerifyArgs {
+        collection_authority_bump,
+    });
     
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new(signer, true),
+            AccountMeta::new(collection_authority, false),
+            AccountMeta::new(destination, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+        ],
+        data: [verify_args.try_to_vec().unwrap()].concat(),
+    }
+}   
 
 /// Builds a new instruction.
 pub fn new(signer: Pubkey, collection: Pubkey) -> Instruction {
@@ -113,12 +137,12 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey, resource: String) 
 
     let ingot_tokens = spl_associated_token_account::get_associated_token_address(
         &signer,
-        &COAL_MINT_ADDRESS,
+        &INGOT_MINT_ADDEESS,
     );
-    // let wood_tokens = spl_associated_token_account::get_associated_token_address(
-    //     &signer,
-    //     &WOOD_MINT_ADDRESS,
-    // );
+    let wood_tokens = spl_associated_token_account::get_associated_token_address(
+        &signer,
+        &WOOD_MINT_ADDRESS,
+    );
 
     let mint_v1_args: ForgeInstruction = ForgeInstruction::MintV1(MintV1Args {
         resource,
@@ -137,10 +161,10 @@ pub fn mint(signer: Pubkey, collection: Pubkey, mint: Pubkey, resource: String) 
             AccountMeta::new_readonly(MPL_CORE_ID, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new(system_program::id(), false),
-            AccountMeta::new(COAL_MINT_ADDRESS, false),
+            AccountMeta::new(INGOT_MINT_ADDEESS, false),
             AccountMeta::new(ingot_tokens, false),
-            // AccountMeta::new(WOOD_MINT_ADDRESS, false),
-            // AccountMeta::new(wood_tokens, false),
+            AccountMeta::new(WOOD_MINT_ADDRESS, false),
+            AccountMeta::new(wood_tokens, false),
         ],
         data: [mint_v1_args.try_to_vec().unwrap()].concat(),
     }
