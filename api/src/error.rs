@@ -7,6 +7,8 @@ use thiserror::Error;
 pub enum ForgeError {
     #[error("Auth failed")]
     AuthFailed = 7,
+    #[error("Invalid resource")]
+    InvalidResource = 8,
 }
 
 impl From<ForgeError> for ProgramError {
