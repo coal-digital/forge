@@ -9,6 +9,8 @@ pub enum ForgeError {
     AuthFailed = 7,
     #[error("Invalid resource")]
     InvalidResource = 8,
+    #[error("Slot too early")]
+    SlotTooEarly = 9,
 }
 
 impl From<ForgeError> for ProgramError {

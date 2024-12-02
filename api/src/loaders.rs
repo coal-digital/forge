@@ -1,11 +1,19 @@
 
+use forge_utils::AccountDeserialize;
 use solana_program::{
-    account_info::AccountInfo, msg, program_error::ProgramError, program_pack::Pack, pubkey::Pubkey, system_program
+    account_info::AccountInfo,
+    program_error::ProgramError,
+    program_pack::Pack,
+    pubkey::Pubkey,
+    system_program,
+    sysvar,
+    msg,
 };
 use spl_token::state::Mint;
+use mpl_core::{Asset, types::UpdateAuthority};
 
 use crate::{
-    consts::*, state::{Config, Treasury}, utils::Discriminator
+    consts::*, state::{Config, Enhancer, Treasury}, utils::Discriminator
 };
 
 /// Errors if:
@@ -261,3 +269,114 @@ pub fn load_treasury<'a, 'info>(
 
     Ok(())
 }
+
+/// Errors if:
+/// - Owner is not Coal program.
+/// - Data is empty.
+/// - Data cannot deserialize into a proof account.
+/// - Proof authority does not match the expected address.
+/// - Expected to be writable, but is not.
+pub fn load_enhance<'a, 'info>(
+    info: &'a AccountInfo<'info>,
+    authority: &Pubkey,
+    is_writable: bool,
+) -> Result<(), ProgramError> {
+    if info.owner.ne(&crate::id()) {
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+
+    if info.data_is_empty() {
+        return Err(ProgramError::UninitializedAccount);
+    }
+
+    let data = info.data.borrow();
+    let enhancer = Enhancer::try_from_bytes(&data)?;
+
+    if enhancer.authority.ne(&authority) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if is_writable && !info.is_writable {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    Ok(())
+}
+
+/// Errors if:
+/// - Data is empty.
+/// - Update authority is not the forge pickaxe collection.
+/// - Attributes plugin is not present.
+/// - Durability attribute is not present.
+/// - Multiplier attribute is not present.
+pub fn load_asset<'a, 'info>(
+    info: &'a AccountInfo<'info>,
+) -> Result<(f64, u64, String), ProgramError> {
+    if info.owner.ne(&mpl_core::ID) {
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+
+    if info.data_is_empty() {
+        return Err(ProgramError::UninitializedAccount);
+    }
+
+    let asset = Asset::from_bytes(&info.data.borrow()).unwrap();
+
+    match asset.base.update_authority {
+        UpdateAuthority::Collection(address) => {
+            if address.ne(&COLLECTION) {
+                msg!("Invalid collection: {:?} == {:?}", address, COLLECTION);
+                return Err(ProgramError::InvalidAccountData);
+            }
+        }
+        _ => return Err(ProgramError::InvalidAccountData),
+    }
+
+    if asset.plugin_list.attributes.is_none() {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+	let attributes_plugin = asset.plugin_list.attributes.unwrap();
+	let durability_attr = attributes_plugin.attributes.attribute_list.iter().find(|attr| attr.key == "durability");
+	let multiplier_attr = attributes_plugin.attributes.attribute_list.iter().find(|attr| attr.key == "multiplier");
+    let resource_attr = attributes_plugin.attributes.attribute_list.iter().find(|attr| attr.key == "resource");
+    let durability = durability_attr.unwrap().value.parse::<f64>().unwrap();
+    let multiplier = multiplier_attr.unwrap().value.parse::<u64>().unwrap();
+    let resource = resource_attr.unwrap().value.clone();
+    
+    Ok((durability, multiplier, resource))
+}
+
+/// Errors if:
+/// - Owner is not the sysvar address.
+/// - Account cannot load with the expected address.
+pub fn load_sysvar<'a, 'info>(
+    info: &'a AccountInfo<'info>,
+    key: Pubkey,
+) -> Result<(), ProgramError> {
+    if info.owner.ne(&sysvar::id()) {
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+
+    load_account(info, key, false)
+}
+
+/// Errors if:
+/// - Address does not match the expected value.
+/// - Expected to be writable, but is not.
+pub fn load_account<'a, 'info>(
+    info: &'a AccountInfo<'info>,
+    key: Pubkey,
+    is_writable: bool,
+) -> Result<(), ProgramError> {
+    if info.key.ne(&key) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if is_writable && !info.is_writable {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    Ok(())
+}
+

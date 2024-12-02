@@ -4,11 +4,13 @@ mod new;
 mod mint;
 mod initialize;
 mod verify;
+mod enhance;
 
 use new::*;
 use mint::*;
 use initialize::*;
 use verify::*;
+use enhance::{init::*, process::*};
 
 use forge_api::instruction::*;
 use borsh::BorshDeserialize;
@@ -33,13 +35,14 @@ pub fn process_instruction(
     }
 
     let instruction: ForgeInstruction = ForgeInstruction::try_from_slice(data).or(Err(ProgramError::InvalidInstructionData))?;
-    println!("Validated instruction data");
     
     match instruction {
         ForgeInstruction::NewV1(args) => process_new(accounts, args)?,
         ForgeInstruction::MintV1(args) => process_mint(accounts, args)?,
         ForgeInstruction::Initialize(args) => process_initialize(accounts, args)?,
         ForgeInstruction::Verify(args) => process_verify(accounts, args)?,
+        ForgeInstruction::InitializeEnhance(args) => process_initialize_enhance(accounts, args)?,
+        ForgeInstruction::Enhance(args) => process_enhance(accounts, args)?,
     }
 
     Ok(())
