@@ -11,6 +11,8 @@ pub enum ForgeError {
     InvalidResource = 8,
     #[error("Slot too early")]
     SlotTooEarly = 9,
+    #[error("Item has degraded to 0 durability")]
+    ItemDegraded = 10,
 }
 
 impl From<ForgeError> for ProgramError {

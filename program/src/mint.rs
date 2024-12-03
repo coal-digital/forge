@@ -68,7 +68,7 @@ pub fn process_mint<'a, 'info>(
 	let mut attribute_list = vec![
 		Attribute {
 			key: "multiplier".to_string(),
-			value: "70".to_string(),
+			value: "300".to_string(),
 		},
 		Attribute {
 			key: "rarity".to_string(),

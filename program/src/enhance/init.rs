@@ -1,9 +1,11 @@
 use std::mem::size_of;
 
 use forge_api::{
-    consts::{CHROMIUM_MINT_ADDRESS, ENHANCER_SEED, ENHANCER_TARGET_SLOT}, 
-    instruction::InitializeEnhanceArgs, 
-    loaders::{load_asset, load_mint, load_signer, load_sysvar, load_token_account, load_uninitialized_pda}, state::Enhancer 
+    consts::{CHROMIUM_MINT_ADDRESS, ENHANCER_SEED, ENHANCER_TARGET_SLOT, ONE_TOKEN},
+    error::ForgeError,
+    instruction::InitializeEnhanceArgs,
+    loaders::{load_asset, load_mint, load_signer, load_sysvar, load_token_account, load_uninitialized_pda},
+    state::Enhancer 
 };
 use forge_utils::spl::burn;
 use solana_program::{
@@ -40,6 +42,10 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
     
     let (durability, _multiplier, _resource) = load_asset(asset_info)?;
 
+    if durability.eq(&0.0) {
+        return Err(ForgeError::ItemDegraded.into());
+    }
+
     // Initialize reprocessor.
     create_pda(
         enhancer_info,
@@ -63,12 +69,13 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
     .0;
 
     // Burn ingredient tokens
+    let burn_amount = (durability / 100.0) * ONE_TOKEN as f64;
     burn(
         chromium_tokens_info, 
         chromium_mint_info,
         signer,
         chromium_tokens_info,
-        durability as u64
+        burn_amount as u64
     )?;
 
     Ok(())

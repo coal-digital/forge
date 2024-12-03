@@ -75,7 +75,12 @@ pub fn process_enhance(accounts: &[AccountInfo], args: EnhanceArgs) -> ProgramRe
     }
 
     msg!("Derived number: {}", pseudo_random_number);
-    // Update the tool
+
+	// Update attributes
+	let asset = Asset::from_bytes(&asset_info.data.borrow()).unwrap();
+	let attributes_plugin = asset.plugin_list.attributes.unwrap();
+	let resource = attributes_plugin.attributes.attribute_list.iter().find(|attr| attr.key == "resource").unwrap().value.clone();
+    
     let mut updated_attributes = vec![
 		Attribute {
 			key: "multiplier".to_string(),
@@ -86,11 +91,6 @@ pub fn process_enhance(accounts: &[AccountInfo], args: EnhanceArgs) -> ProgramRe
 			value: "uncommon".to_string()
 		},
 	];
-
-	// Update other attributes
-	let asset = Asset::from_bytes(&asset_info.data.borrow()).unwrap();
-	let attributes_plugin = asset.plugin_list.attributes.unwrap();
-	let resource = attributes_plugin.attributes.attribute_list.iter().find(|attr| attr.key == "resource").unwrap().value.clone();
 
 	attributes_plugin.attributes.attribute_list.iter().for_each(|attr| {
 		if attr.key != "multiplier" && attr.key != "rarity" {
@@ -174,28 +174,4 @@ fn derive_number_from_hash(hash: &[u8; 32], min: u64, max: u64) -> u64 {
         acc = acc.wrapping_add(u64::from_le_bytes(chunk.try_into().unwrap_or([0; 8])));
     }
     min + (acc % (max - min + 1))
-}
-
-fn calculate_reward(total_hashes: u64, total_rewards: u64) -> u64 {
-    // Calculate a hash factor (gives more weight to number of hashes)
-    let scaling_factor = 16u64;
-    let hash_factor = scaling_factor.saturating_mul(total_hashes);
-    
-    // Calculate a reward factor (gives some weight to total rewards)
-    let reward_factor = (total_rewards as f64).cbrt() as u64;
-    
-    // Combine factors
-    let combined_factor = hash_factor.saturating_mul(reward_factor);
-
-    // Logs
-    msg!("Total hashes: {}", total_hashes);
-    msg!("Total rewards: {}", total_rewards);
-    msg!("Base reward: {}", combined_factor);
-    
-    combined_factor
-}
-
-fn apply_randomness(base_reward: u64, pseudo_random_number: u64) -> u64 {
-    msg!("Derived number: {}", pseudo_random_number);
-    base_reward.saturating_mul(pseudo_random_number)
 }

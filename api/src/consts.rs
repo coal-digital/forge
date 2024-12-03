@@ -5,7 +5,7 @@ use solana_program::{pubkey, pubkey::Pubkey};
 /// There are 100 billion indivisible units per COAL (called "grains").
 pub const TOKEN_DECIMALS: u8 = 11;
 
-/// One COAL, INGOT, ORE and WOOD all have 11 decimals
+/// One COAL, INGOT, ORE, WOOD, CHROMIUM all have 11 decimals
 pub const ONE_TOKEN: u64 = 10u64.pow(TOKEN_DECIMALS as u32);
 
 /// The authority allowed to initialize the program.
