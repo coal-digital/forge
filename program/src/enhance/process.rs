@@ -24,16 +24,15 @@ use crate::utils::AccountDeserialize;
 
 pub fn process_enhance(accounts: &[AccountInfo], args: EnhanceArgs) -> ProgramResult {
     // Load accounts.
-    let [signer, asset_info, new_mint_info, collection_info, collection_authority, enhancer_info, mpl_core_program, system_program, slot_hashes_sysvar] =
+    let [signer, new_mint_info, asset_info, collection_info, collection_authority, enhancer_info, mpl_core_program, system_program, slot_hashes_sysvar] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     load_signer(signer)?;
-    load_enhance(enhancer_info, signer.key, true)?;
+    load_enhance(enhancer_info, signer.key, asset_info.key, true)?;
     load_sysvar(slot_hashes_sysvar, sysvar::slot_hashes::id())?;
-
     
     let mut enhancer_data = enhancer_info.data.borrow_mut();
     let enhancer = Enhancer::try_from_bytes_mut(&mut enhancer_data)?;
@@ -70,7 +69,7 @@ pub fn process_enhance(accounts: &[AccountInfo], args: EnhanceArgs) -> ProgramRe
         let halvings = current_slot.saturating_sub(s_tolerance) as u64;
         msg!("Halvings: {}", halvings);
         if halvings.gt(&0) {
-            pseudo_random_number = pseudo_random_number.saturating_div(2u64.saturating_pow(halvings as u32)).max(1);
+            pseudo_random_number = pseudo_random_number.saturating_div(2u64.saturating_pow(halvings as u32)).max(ENHANCE_MIN_MULTIPLIER);
         }
     }
 
@@ -153,7 +152,9 @@ pub fn process_enhance(accounts: &[AccountInfo], args: EnhanceArgs) -> ProgramRe
     // Burn the old asset
     BurnV1CpiBuilder::new(mpl_core_program)
         .asset(asset_info)
+        .collection(Some(collection_info))
         .authority(Some(signer))
+        .payer(signer)
         .invoke()?;
 
     // Realloc data to zero.

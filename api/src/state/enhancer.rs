@@ -12,6 +12,8 @@ use super::AccountDiscriminator;
 pub struct Enhancer {
     /// The reprocess authority.
     pub authority: Pubkey,
+    /// The asset being enhanced.
+    pub asset: Pubkey,
     /// The slot the reprocessor was created at.
     pub slot: u64,
     /// Sysvar hashes

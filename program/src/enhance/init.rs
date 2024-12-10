@@ -1,7 +1,7 @@
 use std::mem::size_of;
 
 use forge_api::{
-    consts::{CHROMIUM_MINT_ADDRESS, ENHANCER_SEED, ENHANCER_TARGET_SLOT, ONE_TOKEN},
+    consts::*,
     error::ForgeError,
     instruction::InitializeEnhanceArgs,
     loaders::{load_asset, load_mint, load_signer, load_sysvar, load_token_account, load_uninitialized_pda},
@@ -9,13 +9,7 @@ use forge_api::{
 };
 use forge_utils::spl::burn;
 use solana_program::{
-    account_info::AccountInfo,
-    clock::Clock,
-    entrypoint::ProgramResult,
-    keccak::hashv,
-    program_error::ProgramError,
-    slot_hashes::SlotHash, 
-    sysvar::{self, Sysvar}
+    account_info::AccountInfo, clock::Clock, entrypoint::ProgramResult, keccak::hashv, msg, program_error::ProgramError, slot_hashes::SlotHash, sysvar::{self, Sysvar}
 };
 
 use crate::utils::{create_pda, AccountDeserialize, Discriminator};
@@ -30,6 +24,10 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
     };
 
     load_signer(signer)?;
+    // FOR TESTING - Check signer.
+    if signer.key.ne(&INITIALIZER_ADDRESS) {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
     load_mint(chromium_mint_info, CHROMIUM_MINT_ADDRESS, true)?;
     load_token_account(chromium_tokens_info, Some(signer.key), &chromium_mint_info.key, true)?;
     load_uninitialized_pda(
@@ -39,7 +37,7 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
         &forge_api::id(),
     )?;
     load_sysvar(slot_hashes_sysvar, sysvar::slot_hashes::id())?;
-    
+
     let (durability, _multiplier, _resource) = load_asset(asset_info)?;
 
     if durability.eq(&0.0) {
@@ -51,7 +49,7 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
         enhancer_info,
         &forge_api::id(),
         8 + size_of::<Enhancer>(),
-        &[ENHANCER_SEED, signer.key.as_ref(), &[args.enhancer_bump]],
+        &[ENHANCER_SEED, signer.key.as_ref(), asset_info.key.as_ref(), &[args.enhancer_bump]],
         system_program,
         signer,
     )?;
@@ -69,7 +67,8 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
     .0;
 
     // Burn ingredient tokens
-    let burn_amount = (durability / 100.0) * ONE_TOKEN as f64;
+    let burn_amount = (durability / 1000.0) * ONE_TOKEN as f64;
+    msg!("Burning {} Chromium", burn_amount / ONE_TOKEN as f64);
     burn(
         chromium_tokens_info, 
         chromium_mint_info,

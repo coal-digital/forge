@@ -279,6 +279,7 @@ pub fn load_treasury<'a, 'info>(
 pub fn load_enhance<'a, 'info>(
     info: &'a AccountInfo<'info>,
     authority: &Pubkey,
+    asset: &Pubkey,
     is_writable: bool,
 ) -> Result<(), ProgramError> {
     if info.owner.ne(&crate::id()) {
@@ -293,6 +294,10 @@ pub fn load_enhance<'a, 'info>(
     let enhancer = Enhancer::try_from_bytes(&data)?;
 
     if enhancer.authority.ne(&authority) {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if enhancer.asset.ne(&asset) {
         return Err(ProgramError::InvalidAccountData);
     }
 
