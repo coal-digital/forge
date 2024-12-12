@@ -24,10 +24,6 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
     };
 
     load_signer(signer)?;
-    // FOR TESTING - Check signer.
-    if signer.key.ne(&INITIALIZER_ADDRESS) {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
     load_mint(chromium_mint_info, CHROMIUM_MINT_ADDRESS, true)?;
     load_token_account(chromium_tokens_info, Some(signer.key), &chromium_mint_info.key, true)?;
     load_uninitialized_pda(
