@@ -209,6 +209,7 @@ pub fn init_enhance(signer: Pubkey, asset: Pubkey) -> Instruction {
             AccountMeta::new(enhancer, false),
             AccountMeta::new(CHROMIUM_MINT_ADDRESS, false),
             AccountMeta::new(chromium_tokens, false),
+            AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(sysvar::slot_hashes::id(), false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],

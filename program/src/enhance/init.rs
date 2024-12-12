@@ -17,7 +17,7 @@ use crate::utils::{create_pda, AccountDeserialize, Discriminator};
 
 pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnhanceArgs) -> ProgramResult {
     // Load accounts.
-    let [signer, asset_info, enhancer_info, chromium_mint_info, chromium_tokens_info, slot_hashes_sysvar, system_program] =
+    let [signer, asset_info, enhancer_info, chromium_mint_info, chromium_tokens_info, spl_token_program, slot_hashes_sysvar, system_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -69,7 +69,7 @@ pub fn process_initialize_enhance(accounts: &[AccountInfo], args: InitializeEnha
         chromium_tokens_info, 
         chromium_mint_info,
         signer,
-        chromium_tokens_info,
+        spl_token_program,
         burn_amount as u64
     )?;
 
