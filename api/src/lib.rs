@@ -1,12 +1,19 @@
 pub mod consts;
 pub mod error;
-pub mod event;
 pub mod instruction;
+pub mod sdk;
 pub mod state;
-pub mod loaders;
+pub mod utils;
 
-pub(crate) use forge_utils as utils;
+pub mod prelude {
+    pub use crate::consts::*;
+    pub use crate::error::*;
+    pub use crate::instruction::*;
+    pub use crate::sdk::*;
+    pub use crate::state::*;
+    pub use crate::utils::*;
+}
 
-use solana_program::declare_id;
+use steel::*;
 
 declare_id!("HXwf9HxBCZLLJS7uy4q5qAzLiAGLDTp5iWicPNiWC5Vo");

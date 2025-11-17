@@ -15,17 +15,22 @@ pub const INITIALIZER_ADDRESS: Pubkey = pubkey!("FJka1yJHn1SWux2X1o8VqHC8uaAWGv6
 const PROGRAM_ID: [u8; 32] = unsafe { *(&crate::id() as *const Pubkey as *const [u8; 32]) };
 
 pub const COAL_PROGRAM_ID: Pubkey = pubkey!("EG67mGGTxMGuPxDLWeccczVecycmpj2SokzpWeBoGVTf");
-pub const COAL_PROGRAM_ID_BYTES: [u8; 32] = unsafe { *(&COAL_PROGRAM_ID as *const Pubkey as *const [u8; 32]) };
+pub const COAL_PROGRAM_ID_BYTES: [u8; 32] =
+    unsafe { *(&COAL_PROGRAM_ID as *const Pubkey as *const [u8; 32]) };
 
 pub const COAL_UPDATE_AUTHORITY_SEED: &[u8] = b"update_authority";
-pub const COAL_UPDATE_AUTHORITY: Pubkey = Pubkey::new_from_array(ed25519::derive_program_address(&[COAL_UPDATE_AUTHORITY_SEED], &COAL_PROGRAM_ID_BYTES).0);
+pub const COAL_UPDATE_AUTHORITY: Pubkey = Pubkey::new_from_array(
+    ed25519::derive_program_address(&[COAL_UPDATE_AUTHORITY_SEED], &COAL_PROGRAM_ID_BYTES).0,
+);
 
 pub const ROYALTIES_BASIS_POINTS: u16 = 400;
 pub const ROYALTY_CREATOR_ADDRESS: Pubkey = pubkey!("B7yXtWpKXfwLDGyHLvab7ypZemajAbR2Kvbn2ogNs8J9");
 
 pub const COLLECTION: Pubkey = pubkey!("CuaLHUJA1dyQ6AYcTcMZrCoBqssSJbqkY7VfEEFdxzCk");
 pub const COLLECTION_AUTHORITY_SEED: &[u8] = b"collection_authority";
-pub const COLLECTION_AUTHORITY_ADDRESS: Pubkey = Pubkey::new_from_array(ed25519::derive_program_address(&[COLLECTION_AUTHORITY_SEED], &PROGRAM_ID).0);
+pub const COLLECTION_AUTHORITY_ADDRESS: Pubkey = Pubkey::new_from_array(
+    ed25519::derive_program_address(&[COLLECTION_AUTHORITY_SEED], &PROGRAM_ID).0,
+);
 
 pub const CONFIG_SEED: &[u8] = b"config";
 pub const ENHANCER_SEED: &[u8] = b"enhancer";
@@ -49,3 +54,6 @@ pub const ENHANCER_TARGET_SLOT: u64 = 20;
 pub const ENHANCE_SLOT_BUFFER: u64 = 6;
 pub const ENHANCE_MIN_MULTIPLIER: u64 = 320;
 pub const ENHANCE_MAX_MULTIPLIER: u64 = 600;
+
+/// SPL Token program ID
+pub const TOKEN_PROGRAM_ID: Pubkey = pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");

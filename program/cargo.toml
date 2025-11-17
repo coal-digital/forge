@@ -19,12 +19,7 @@ no-entrypoint = []
 default = []
 
 [dependencies]
-drillx.workspace = true
-mpl-token-metadata.workspace = true
 forge-api.workspace = true
-forge-utils.workspace = true
-solana-program.workspace = true
-spl-token.workspace = true
-spl-associated-token-account.workspace = true
 mpl-core.workspace = true
-borsh.workspace = true
+solana-program.workspace = true
+steel.workspace = true

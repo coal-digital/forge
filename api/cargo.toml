@@ -10,17 +10,11 @@ repository.workspace = true
 keywords.workspace = true
 
 [dependencies]
-array-const-fn-init.workspace = true
 bytemuck.workspace = true
 const-crypto.workspace = true
-drillx.workspace = true
-mpl-token-metadata.workspace = true
-num_enum.workspace = true
-forge-utils.workspace = true
-solana-program.workspace = true
-spl-token.workspace = true
-spl-associated-token-account.workspace = true
-static_assertions.workspace = true
-thiserror.workspace = true
-borsh.workspace = true
 mpl-core.workspace = true
+num_enum.workspace = true
+solana-program.workspace = true
+steel.workspace = true
+thiserror.workspace = true
+spl-associated-token-account.workspace = true
