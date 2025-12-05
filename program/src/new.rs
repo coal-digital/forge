@@ -59,6 +59,7 @@ pub fn process_new<'a, 'info>(accounts: &'a [AccountInfo<'info>], data: &[u8]) -
             return Err(ProgramError::InvalidAccountData);
         }
         mint_info.as_mint()?;
+        // TODO burn ingredient tokens
     }
 
     let collection_authority_seeds =

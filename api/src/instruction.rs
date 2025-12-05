@@ -5,6 +5,7 @@ use steel::*;
 pub enum ForgeInstruction {
     NewV1 = 0,
     MintV1 = 1,
+    UpdateV1 = 2,
 }
 
 #[repr(C)]
@@ -28,5 +29,14 @@ pub struct NewV1 {
     pub _padding: [u8; 6],
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Pod, Zeroable)]
+pub struct UpdateV1 {
+    pub amounts: [u64; 3],
+    pub ingredients: [Pubkey; 3],
+    pub _padding: [u8; 8],
+}
+
 instruction!(ForgeInstruction, MintV1);
 instruction!(ForgeInstruction, NewV1);
+instruction!(ForgeInstruction, UpdateV1);

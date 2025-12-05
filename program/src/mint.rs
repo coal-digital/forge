@@ -1,8 +1,10 @@
 use forge_api::prelude::*;
 use mpl_core::{
+    fetch_collection_plugin,
     instructions::CreateV2CpiBuilder,
-    types::{Attribute, Attributes, Plugin, PluginAuthority, PluginAuthorityPair},
-    Collection,
+    types::{
+        Attribute, Attributes, Plugin, PluginAuthority, PluginAuthorityPair, PluginType, Royalties,
+    },
 };
 use solana_program::msg;
 use steel::*;
@@ -27,12 +29,17 @@ pub fn process_mint<'a, 'info>(accounts: &'a [AccountInfo<'info>], data: &[u8]) 
     for i in 0..config.ingredients.len() {
         let ingredient = config.ingredients[i];
         let amount = config.amounts[i];
-        msg!("Ingredient: {:?}, amount: {:?}", ingredient, amount);
+        msg!(
+            "Ingredient: {:?}, amount: {:?}",
+            ingredient,
+            amount / ONE_TOKEN
+        );
         if amount == 0 {
             continue;
         }
 
         let mint_info = &remaining_accounts[i * 2];
+        msg!("Mint info: {:?}", mint_info.key);
         let ingredient_tokens_info = &remaining_accounts[i * 2 + 1];
 
         if ingredient.ne(&mint_info.key) {
@@ -51,16 +58,13 @@ pub fn process_mint<'a, 'info>(accounts: &'a [AccountInfo<'info>], data: &[u8]) 
         )?;
     }
 
-    let collection: Box<Collection> = {
-        let collection_data = collection_info.data.borrow();
-        Collection::from_bytes(&collection_data).unwrap()
-    };
-    let royalties_plugin = collection.plugin_list.royalties.unwrap();
+    let (_, royalties_plugin, _) =
+        fetch_collection_plugin::<Royalties>(collection_info, PluginType::Royalties)?;
 
     let mut attribute_list = vec![
         Attribute {
             key: "multiplier".to_string(),
-            value: "300".to_string(),
+            value: "70".to_string(),
         },
         Attribute {
             key: "rarity".to_string(),
@@ -99,7 +103,7 @@ pub fn process_mint<'a, 'info>(accounts: &'a [AccountInfo<'info>], data: &[u8]) 
                 }),
             },
             PluginAuthorityPair {
-                plugin: Plugin::Royalties(royalties_plugin.royalties),
+                plugin: Plugin::Royalties(royalties_plugin),
                 authority: Some(PluginAuthority::Address {
                     address: COAL_UPDATE_AUTHORITY,
                 }),
